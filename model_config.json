@@ -16,106 +16,88 @@
   "conversation_settings": {
     "max_history_length": 20,
     "context_window": 8000,
-    "system_prompt_file": "system_prompt.txt"
-  },
-  "lta_api_settings": {
-    "base_url": "https://datamall2.mytransport.sg/ltaodataservice",
-    "endpoints": {
-      "bus_arrival": "/v3/BusArrival",
-      "carpark_availability": "/CarParkAvailabilityv2"
-    },
-    "rate_limits": {
-      "requests_per_minute": 500,
-      "requests_per_day": 5000
-    },
-    "timeout": 10,
-    "max_retries": 2
+    "system_prompt_file": "system_prompt.md"
   },
   "tools": [
     {
       "type": "function",
       "function": {
-        "name": "get_bus_arrival",
-        "description": "STEP 2: Get real-time bus arrival information for a specific bus stop code. Use this when: 1) User provides a 5-digit bus stop code directly, OR 2) User has selected a bus stop from the options provided by find_bus_stops_by_location. This gives live arrival times, crowding info, and estimated arrival minutes.",
+        "name": "add_chore",
+        "description": "Create a new recurring chore for the user. Use this when the user wants to start tracking a new chore, e.g. 'remind me to water the plants every 3 days'. Errors if a chore with the same name already exists — use update_chore instead in that case.",
         "parameters": {
           "type": "object",
           "properties": {
-            "bus_stop_code": {
+            "name": {
               "type": "string",
-              "description": "The 5-digit bus stop code (e.g., '01012', '28009')"
+              "description": "The name of the chore, e.g. 'Water plants'"
             },
-            "service_no": {
-              "type": "string",
-              "description": "Optional specific bus service number to filter results"
-            }
-          },
-          "required": ["bus_stop_code"]
-        }
-      }
-    },
-    {
-      "type": "function",
-      "function": {
-        "name": "get_bus_arrivals_by_location",
-        "description": "DEPRECATED: Use the 2-step approach instead. For location queries: 1) Use find_bus_stops_by_location first, 2) Let user choose, 3) Use get_bus_arrival. Only use this function if you need to get arrivals for multiple stops at once without user interaction.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "location_query": {
-              "type": "string",
-              "description": "Location name or description to search for nearby bus stops (e.g., 'Ang Mo Kio Hub', 'ION Orchard', 'Marina Bay Sands')"
-            },
-            "service_no": {
-              "type": "string",
-              "description": "Optional specific bus service number to filter results"
-            },
-            "max_stops": {
+            "interval_days": {
               "type": "integer",
-              "description": "Maximum number of bus stops to show (default: 5, max: 10)"
-            }
-          },
-          "required": ["location_query"]
-        }
-      }
-    },
-    {
-      "type": "function",
-      "function": {
-        "name": "find_bus_stops_by_location",
-        "description": "STEP 1: Find bus stops near a location when user mentions a place name instead of a bus stop code. Use this as the FIRST STEP when users ask for bus arrivals at locations like 'ION Orchard', 'Bras Basah Complex', 'Marina Bay Sands', etc. Present the options to user for confirmation before getting arrival times.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "location_query": {
-              "type": "string",
-              "description": "Location name or description to search for nearby bus stops"
+              "description": "How often the chore should be repeated, in days (e.g. 3 for every 3 days)"
             },
-            "max_results": {
+            "grace_days": {
               "type": "integer",
-              "description": "Maximum number of bus stops to return (default: 5, max: 10)"
+              "description": "Optional grace period in days after the interval passes before the chore is considered overdue (default: 3)"
             }
           },
-          "required": ["location_query"]
+          "required": ["name", "interval_days"]
         }
       }
     },
     {
       "type": "function",
       "function": {
-        "name": "get_carpark_availability",
-        "description": "Get real-time carpark availability information",
+        "name": "list_outstanding_chores",
+        "description": "List all of the user's chores that are currently due or overdue. Use this when the user asks what's due, pending, or outstanding.",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "complete_chore",
+        "description": "Mark a chore as done right now. Use this when the user says they've completed a chore, e.g. 'I did the dishes' or 'watered the plants just now'. Optionally records a remark about the completion.",
         "parameters": {
           "type": "object",
           "properties": {
-            "carpark_id": {
+            "name": {
               "type": "string",
-              "description": "Optional specific carpark ID to filter results"
+              "description": "The name of the chore that was completed"
             },
-            "area": {
+            "remark": {
               "type": "string",
-              "description": "Optional area filter (e.g., Orchard, Marina, HarbourFront, Jurong Lake District)"
+              "description": "Optional remark about how the chore went, e.g. 'took longer than usual'"
             }
-          }
+          },
+          "required": ["name"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "update_chore",
+        "description": "Change the interval and/or grace period of an existing chore. Use this when the user wants to reschedule a chore or adjust how much grace it gets before being marked overdue. At least one of interval_days or grace_days must be provided.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the existing chore to update"
+            },
+            "interval_days": {
+              "type": "integer",
+              "description": "New interval in days between repetitions of the chore"
+            },
+            "grace_days": {
+              "type": "integer",
+              "description": "New grace period in days after the interval passes before the chore is considered overdue"
+            }
+          },
+          "required": ["name"]
         }
       }
     }
