@@ -22,6 +22,20 @@ def list_outstanding_chores_tool(user_id):
     return "\n".join(lines)
 
 
+def list_all_chores_tool(user_id):
+    all_chores = chore_manager.list_all(user_id)
+    if not all_chores:
+        return "No chores tracked yet."
+
+    lines = []
+    for chore in all_chores:
+        lines.append(
+            f"{chore['name']} | status: {chore['status']} | "
+            f"last_done: {chore['last_done']} | next_due: {chore['next_due']}"
+        )
+    return "\n".join(lines)
+
+
 def complete_chore_tool(user_id, name, remark=None):
     try:
         chore = chore_manager.complete_chore(user_id, name, remark)
@@ -56,6 +70,7 @@ def format_overdue_notification(user_id):
 TOOL_FUNCTIONS = {
     'add_chore': add_chore_tool,
     'list_outstanding_chores': list_outstanding_chores_tool,
+    'list_all_chores': list_all_chores_tool,
     'complete_chore': complete_chore_tool,
     'update_chore': update_chore_tool
 }

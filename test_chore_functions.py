@@ -46,6 +46,37 @@ def test_list_outstanding_chores_tool_lists_overdue_chore():
     assert "OVERDUE" in result
 
 
+def test_list_all_chores_tool_reports_no_chores():
+    result = chore_functions.TOOL_FUNCTIONS['list_all_chores'](user_id="123")
+
+    assert result == "No chores tracked yet."
+
+
+def test_list_all_chores_tool_lists_every_chore_plain_text():
+    chore_functions.TOOL_FUNCTIONS['add_chore'](user_id="123", name="Water plants", interval_days=3)
+    chore_functions.TOOL_FUNCTIONS['add_chore'](user_id="123", name="Vacuum", interval_days=7)
+
+    result = chore_functions.TOOL_FUNCTIONS['list_all_chores'](user_id="123")
+
+    assert "Water plants | status: ok | last_done:" in result
+    assert "Vacuum | status: ok | last_done:" in result
+    assert "next_due:" in result
+    # Plain data only — no persona or HTML formatting from the tool itself
+    assert "<b>" not in result
+    assert "minion" not in result.lower()
+
+
+def test_list_all_chores_tool_shows_overdue_status():
+    chore_manager.add_chore("123", "Water plants", interval_days=3, grace_days=3)
+    data = chore_manager.load_chores("123")
+    data["chores"][0]["last_done"] = (datetime.now() - timedelta(days=10)).isoformat()
+    chore_manager.save_chores("123", data)
+
+    result = chore_functions.TOOL_FUNCTIONS['list_all_chores'](user_id="123")
+
+    assert "status: overdue" in result
+
+
 def test_complete_chore_tool_includes_remark():
     chore_functions.TOOL_FUNCTIONS['add_chore'](user_id="123", name="Water plants", interval_days=3)
 
