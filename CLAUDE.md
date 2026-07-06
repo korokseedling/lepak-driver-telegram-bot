@@ -54,18 +54,19 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 **chore_functions.py** - OpenAI function implementations
 - `add_chore(name, interval_days, grace_days=3)` - create a new recurring chore
 - `list_outstanding_chores()` - list chores that are due or overdue
+- `list_all_chores()` - list every chore regardless of status, with last-done and next-due dates; returns plain unstyled text (no HTML/persona) — the LLM converts it to Claptrap's voice per `system_prompt.md`
 - `complete_chore(name, remark=None)` - mark a chore done now, optionally logging a remark
 - `update_chore(name, interval_days=None, grace_days=None)` - change an existing chore's interval/grace settings
-- Telegram HTML formatting for all responses
+- Telegram HTML formatting for all responses except `list_all_chores`, which is deliberately plain
 
 **model_config.json** - Configuration
-- OpenAI model settings (GPT-4o-mini, temperature: 0.7)
-- Tool function definitions for the 4 chore functions above
+- OpenAI model settings (GPT-4o-mini via OpenRouter, temperature: 0.7)
+- Tool function definitions for the 5 chore functions above
 
 **system_prompt.md** - Bot personality and formatting rules
 - Claptrap persona: zany, boastful, Napoleon complex, calls the user "minion" — but chore facts reported must stay accurate, no exaggerating what's overdue
 - Strict HTML formatting requirements (no asterisks)
-- Guidance on when to call each of the 4 chore functions
+- Guidance on when to call each of the 5 chore functions, including converting `list_all_chores`'s plain-text output into HTML/persona
 
 ### Data Flow
 
@@ -137,3 +138,5 @@ When adding new functionality:
 ### Deployment Notes
 
 The bot is designed for Railway deployment with extensive environment variable debugging. All API keys are validated on startup with detailed error messages for troubleshooting Railway configuration issues.
+
+**Persistent storage:** Railway's container filesystem is ephemeral by default — every redeploy starts from a fresh disk, wiping `chores/` and `conversations/`. To keep chore data across redeploys, attach a Railway Volume mounted at `/app/chores` (Railway dashboard → service → Settings → Volumes). `conversations/` is intentionally left unmounted since it's daily/disposable data with its own 7-day auto-cleanup. Without the volume, users have to re-add all their chores after every `git push` to `main`.
