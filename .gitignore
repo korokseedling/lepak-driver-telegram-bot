@@ -3,10 +3,10 @@
 
 # Logs
 *.log
-lepak_driver_bot.log
 
-# Conversation history
+# Conversation history and chore data
 conversations/
+chores/
 __pycache__/
 
 # Python cache
