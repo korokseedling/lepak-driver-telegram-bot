@@ -149,6 +149,23 @@ def list_outstanding(user_id, now: datetime = None) -> list:
     return outstanding
 
 
+def list_all(user_id, now: datetime = None) -> list:
+    if now is None:
+        now = datetime.now()
+    data = load_chores(user_id)
+
+    _status_rank = {"overdue": 0, "due": 1, "ok": 2}
+    result = []
+    for chore in data["chores"]:
+        status = get_chore_status(chore, now)
+        last_done = datetime.fromisoformat(chore["last_done"])
+        next_due = (last_done + timedelta(days=chore["interval_days"])).isoformat()
+        result.append({**chore, "status": status, "next_due": next_due})
+
+    result.sort(key=lambda c: (_status_rank[c["status"]], c["next_due"]))
+    return result
+
+
 def list_all_user_ids() -> list:
     _ensure_chores_dir()
     user_ids = []

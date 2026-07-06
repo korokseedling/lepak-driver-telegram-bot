@@ -160,6 +160,71 @@ def test_list_outstanding_returns_due_and_overdue_with_status():
     assert outstanding[0]["status"] == "overdue"
 
 
+def test_list_all_includes_ok_due_and_overdue_chores():
+    now = datetime(2026, 7, 6, 12, 0, 0)
+    chore_manager.add_chore("123", "Fresh chore", interval_days=3)
+    chore_manager.add_chore("123", "Overdue chore", interval_days=3, grace_days=3)
+
+    data = chore_manager.load_chores("123")
+    for chore in data["chores"]:
+        if chore["name"] == "Overdue chore":
+            chore["last_done"] = (now - timedelta(days=6)).isoformat()
+    chore_manager.save_chores("123", data)
+
+    all_chores = chore_manager.list_all("123", now)
+
+    assert len(all_chores) == 2
+    names_and_status = {c["name"]: c["status"] for c in all_chores}
+    assert names_and_status == {"Fresh chore": "ok", "Overdue chore": "overdue"}
+
+
+def test_list_all_computes_next_due_as_last_done_plus_interval():
+    now = datetime(2026, 7, 6, 12, 0, 0)
+    last_done = now - timedelta(days=1)
+    chore_manager.add_chore("123", "Water plants", interval_days=3)
+    data = chore_manager.load_chores("123")
+    data["chores"][0]["last_done"] = last_done.isoformat()
+    chore_manager.save_chores("123", data)
+
+    all_chores = chore_manager.list_all("123", now)
+
+    expected_next_due = (last_done + timedelta(days=3)).isoformat()
+    assert all_chores[0]["next_due"] == expected_next_due
+
+
+def test_list_all_sorts_overdue_then_due_then_ok():
+    now = datetime(2026, 7, 6, 12, 0, 0)
+    chore_manager.add_chore("123", "OK chore", interval_days=10)
+    chore_manager.add_chore("123", "Due chore", interval_days=3, grace_days=3)
+    chore_manager.add_chore("123", "Overdue chore", interval_days=3, grace_days=3)
+
+    data = chore_manager.load_chores("123")
+    for chore in data["chores"]:
+        if chore["name"] == "Due chore":
+            chore["last_done"] = (now - timedelta(days=3)).isoformat()
+        if chore["name"] == "Overdue chore":
+            chore["last_done"] = (now - timedelta(days=6)).isoformat()
+    chore_manager.save_chores("123", data)
+
+    all_chores = chore_manager.list_all("123", now)
+
+    assert [c["name"] for c in all_chores] == ["Overdue chore", "Due chore", "OK chore"]
+
+
+def test_list_all_sorts_by_next_due_within_same_status_group():
+    now = datetime(2026, 7, 6, 12, 0, 0)
+    chore_manager.add_chore("123", "OK chore far", interval_days=20)
+    chore_manager.add_chore("123", "OK chore near", interval_days=10)
+
+    all_chores = chore_manager.list_all("123", now)
+
+    assert [c["name"] for c in all_chores] == ["OK chore near", "OK chore far"]
+
+
+def test_list_all_returns_empty_list_when_no_chores():
+    assert chore_manager.list_all("123") == []
+
+
 def test_list_all_user_ids_returns_users_with_chore_files():
     chore_manager.add_chore("123", "Water plants", interval_days=3)
     chore_manager.add_chore("456", "Vacuum", interval_days=7)
