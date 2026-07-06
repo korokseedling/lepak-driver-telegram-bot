@@ -58,6 +58,17 @@
     {
       "type": "function",
       "function": {
+        "name": "list_all_chores",
+        "description": "List every chore the user has, regardless of due status, with last-done and next-due dates. Use this when the user asks to see their full chore list, all chores, or what they're tracking overall — not just what's due or overdue.",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "complete_chore",
         "description": "Mark a chore as done right now. Use this when the user says they've completed a chore, e.g. 'I did the dishes' or 'watered the plants just now'. Optionally records a remark about the completion.",
         "parameters": {
