@@ -30,7 +30,7 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 
 ### Environment Variables Required
 - `TELEGRAM_TOKEN` - From @BotFather
-- `OPENAI_API_KEY` - OpenAI API access
+- `OPENROUTER_API_KEY` - OpenRouter API access (routes to GPT-4o-mini via OpenRouter)
 
 (`LTA_API_KEY` is no longer required — it was only used by the retired bus/carpark domain logic.)
 

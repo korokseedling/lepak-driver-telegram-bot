@@ -30,7 +30,7 @@ print("🔍 Debug: Checking environment variables...")
 print(f"Total environment variables: {len(os.environ)}")
 
 # Check specifically for our variables
-target_vars = ['TELEGRAM_TOKEN', 'OPENAI_API_KEY']
+target_vars = ['TELEGRAM_TOKEN', 'OPENROUTER_API_KEY']
 for key in target_vars:
     if key in os.environ:
         value = os.environ[key]
@@ -39,20 +39,20 @@ for key in target_vars:
         print(f"❌ {key} not found in environment")
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 print(f"🔍 After loading:")
 print(f"TELEGRAM_TOKEN: {'✅ Found' if TELEGRAM_TOKEN else '❌ Missing'}")
-print(f"OPENAI_API_KEY: {'✅ Found' if OPENAI_API_KEY else '❌ Missing'}")
+print(f"OPENROUTER_API_KEY: {'✅ Found' if OPENROUTER_API_KEY else '❌ Missing'}")
 
 # Check if API keys are loaded before initializing client
-if not TELEGRAM_TOKEN or not OPENAI_API_KEY:
+if not TELEGRAM_TOKEN or not OPENROUTER_API_KEY:
     print("\n❌ Error: Missing API keys in environment variables")
     print("🔧 Railway Troubleshooting:")
     print("1. Go to Railway dashboard > Your Project > Variables tab")
     print("2. Make sure variables are spelled EXACTLY as:")
     print("   - TELEGRAM_TOKEN")
-    print("   - OPENAI_API_KEY")
+    print("   - OPENROUTER_API_KEY")
     print("3. Values should have NO quotes, NO spaces at start/end")
     print("4. After adding variables, redeploy the service")
 
@@ -66,7 +66,7 @@ if not TELEGRAM_TOKEN or not OPENAI_API_KEY:
 
     exit(1)
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(api_key=OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1")
 
 # Load configuration
 with open('model_config.json', 'r') as f:

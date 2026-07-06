@@ -43,7 +43,7 @@ cp .env.example .env
 Create a `.env` file with:
 ```
 TELEGRAM_TOKEN=your_telegram_bot_token
-OPENAI_API_KEY=your_openai_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 ### 4. Run the Bot

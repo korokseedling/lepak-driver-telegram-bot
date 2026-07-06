@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 os.environ.setdefault("TELEGRAM_TOKEN", "test-token")
-os.environ.setdefault("OPENAI_API_KEY", "test-key")
+os.environ.setdefault("OPENROUTER_API_KEY", "test-key")
 
 import chore_manager
 import bot

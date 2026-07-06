@@ -66,7 +66,7 @@ Make sure these files are in your repository:
 
 ```
 TELEGRAM_TOKEN=your_telegram_bot_token_here
-OPENAI_API_KEY=your_openai_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 ```
 
 **To add each variable:**
@@ -78,7 +78,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 Or via the Railway CLI:
 ```bash
 railway variables --set TELEGRAM_TOKEN="your_telegram_bot_token_here"
-railway variables --set OPENAI_API_KEY="your_openai_api_key_here"
+railway variables --set OPENROUTER_API_KEY="your_openrouter_api_key_here"
 ```
 
 ### 2.4 Configure Service Settings

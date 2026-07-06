@@ -15,7 +15,7 @@ def test_environment_variables():
 
     load_dotenv()
 
-    required_vars = ['TELEGRAM_TOKEN', 'OPENAI_API_KEY']
+    required_vars = ['TELEGRAM_TOKEN', 'OPENROUTER_API_KEY']
     missing_vars = []
 
     for var in required_vars:
