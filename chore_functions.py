@@ -15,7 +15,7 @@ def list_outstanding_chores_tool(user_id):
     if not outstanding:
         return "✅ Nothing outstanding, minion! All chores are up to date."
 
-    lines = ["📋 <b>Outstanding chores:</b>"]
+    lines = ["📋 <b>Outstanding chores, minion:</b>"]
     for chore in outstanding:
         status_label = "OVERDUE" if chore["status"] == "overdue" else "due"
         lines.append(f"• <b>{chore['name']}</b> — {status_label} (last done: {chore['last_done']})")

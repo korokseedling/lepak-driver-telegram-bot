@@ -55,6 +55,16 @@ def test_complete_chore_tool_includes_remark():
     assert "used less water" in result
 
 
+def test_complete_chore_tool_without_remark_omits_remark_text():
+    chore_functions.TOOL_FUNCTIONS['add_chore'](user_id="123", name="Water plants", interval_days=3)
+
+    result = chore_functions.TOOL_FUNCTIONS['complete_chore'](user_id="123", name="Water plants")
+
+    assert "Water plants" in result
+    assert "Remark logged" not in result
+    assert not result.startswith("❌")
+
+
 def test_complete_chore_tool_returns_error_when_not_found():
     result = chore_functions.TOOL_FUNCTIONS['complete_chore'](user_id="123", name="Water plants")
 
