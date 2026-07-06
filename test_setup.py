@@ -95,7 +95,6 @@ def test_imports():
     required_packages = [
         ('telegram', 'python-telegram-bot'),
         ('openai', 'openai'),
-        ('requests', 'requests'),
         ('dotenv', 'python-dotenv')
     ]
 

@@ -1,6 +1,6 @@
-# Deploy Lepak Driver Bot to Railway
+# Deploy Claptrap Chore Bot to Railway
 
-This guide walks you through deploying your Lepak Driver Telegram bot to Railway for production use.
+This guide walks you through deploying your Claptrap Chore Bot Telegram bot to Railway for production use.
 
 ## Prerequisites
 
@@ -9,18 +9,17 @@ This guide walks you through deploying your Lepak Driver Telegram bot to Railway
    - GitHub account
    - Telegram Bot Token (from @BotFather)
    - OpenAI API Key
-   - LTA DataMall API Key
 
 2. **Local setup complete:**
    - Bot tested locally with `python test_setup.py`
-   - All files in `telegram_lepak_driver` folder
+   - All files in `claptrap-chore-bot` folder
 
 ## Step 1: Prepare Your Repository
 
 ### 1.1 Create GitHub Repository
 ```bash
 # Navigate to your bot directory
-cd telegram_lepak_driver
+cd claptrap-chore-bot
 
 # Initialize git repository
 git init
@@ -29,11 +28,11 @@ git init
 git add .
 
 # Make initial commit
-git commit -m "Initial commit: Lepak Driver Telegram Bot"
+git commit -m "Initial commit: Claptrap Chore Bot"
 
 # Create GitHub repository and push
 # (Replace with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/lepak-driver-telegram-bot.git
+git remote add origin https://github.com/YOUR_USERNAME/claptrap-chore-bot.git
 git branch -M main
 git push -u origin main
 ```
@@ -44,8 +43,8 @@ Make sure these files are in your repository:
 - ✅ `Procfile` (contains: `worker: python bot.py`)
 - ✅ `requirements.txt` (Python dependencies)
 - ✅ `model_config.json` (configuration)
-- ✅ `bus_stops_singapore.json` (bus stop data)
-- ✅ Other Python files (`lta_integration.py`, `tool_functions.py`, etc.)
+- ✅ `system_prompt.md` (Claptrap persona and formatting rules)
+- ✅ `chore_manager.py` and `chore_functions.py` (chore-tracking logic)
 
 ## Step 2: Deploy to Railway
 
@@ -57,7 +56,7 @@ Make sure these files are in your repository:
 ### 2.2 Create New Project
 1. Click **"New Project"**
 2. Select **"Deploy from GitHub repo"**
-3. Choose your `lepak-driver-telegram-bot` repository
+3. Choose your `claptrap-chore-bot` repository
 4. Click **"Deploy Now"**
 
 ### 2.3 Configure Environment Variables
@@ -67,8 +66,7 @@ Make sure these files are in your repository:
 
 ```
 TELEGRAM_TOKEN=your_telegram_bot_token_here
-OPENAI_API_KEY=your_openai_api_key_here  
-LTA_API_KEY=your_lta_datamall_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 **To add each variable:**
@@ -76,6 +74,12 @@ LTA_API_KEY=your_lta_datamall_api_key_here
 - Enter the variable name (e.g., `TELEGRAM_TOKEN`)
 - Enter the value
 - Click **"Add"**
+
+Or via the Railway CLI:
+```bash
+railway variables --set TELEGRAM_TOKEN="your_telegram_bot_token_here"
+railway variables --set OPENAI_API_KEY="your_openai_api_key_here"
+```
 
 ### 2.4 Configure Service Settings
 1. Go to **"Settings"** tab
@@ -88,8 +92,7 @@ LTA_API_KEY=your_lta_datamall_api_key_here
 2. Monitor the **"Logs"** tab for deployment progress
 3. Look for messages like:
    ```
-   🚌 Starting Lepak Driver bot...
-   📊 Loaded 5163 bus stops
+   🤖 Starting Claptrap Chore Bot...
    ✅ Bot initialized successfully!
    🔄 Starting polling for messages...
    ```
@@ -106,15 +109,15 @@ In Railway dashboard:
 1. Open Telegram
 2. Search for your bot by username
 3. Send `/start` command
-4. Try a test query: "bus arrivals at ION Orchard"
-5. Verify the bot responds correctly
+4. Try a test query: "add a chore: water the plants, every 3 days"
+5. Verify the bot responds correctly, in Claptrap's voice
 
 ## Step 4: Monitoring and Maintenance
 
 ### 4.1 Monitor Usage
 - Check Railway dashboard for resource usage
 - Monitor logs for errors or performance issues
-- Watch API usage (OpenAI, LTA DataMall limits)
+- Watch OpenAI API usage/limits
 
 ### 4.2 Update Bot
 To update your bot after code changes:
@@ -158,14 +161,12 @@ For production use, consider upgrading to a paid plan.
 ```
 ❌ Verify API keys are correct and active
 ❌ Check OpenAI account has credits
-❌ Confirm LTA API key is valid
 ```
 
 **Bot responds slowly:**
 ```
 ❌ Check if Railway service is sleeping (free tier)
 ❌ Monitor OpenAI API response times
-❌ Verify LTA API is accessible
 ```
 
 ### Debug Commands
@@ -195,7 +196,7 @@ railway link
 railway logs
 
 # Set environment variables
-railway variables set TELEGRAM_TOKEN=your_token_here
+railway variables --set TELEGRAM_TOKEN="your_token_here"
 ```
 
 ## Security Best Practices
@@ -224,15 +225,15 @@ railway variables set TELEGRAM_TOKEN=your_token_here
 - ✅ All environment variables configured
 - ✅ Bot responding to test commands
 - ✅ Logs showing successful startup
-- ✅ API keys working (OpenAI, LTA, Telegram)
+- ✅ API keys working (OpenAI, Telegram)
 - ✅ Error handling tested
 - ✅ Resource usage monitored
 
 ## Support and Updates
 
 - **Railway Documentation**: [docs.railway.app](https://docs.railway.app)
-- **Bot Logs**: Check Railway dashboard > Logs tab
-- **API Status**: Monitor OpenAI and LTA API status pages
+- **Bot Logs**: Check Railway dashboard > Logs tab (also written to `claptrap_bot.log`)
+- **API Status**: Monitor OpenAI API status page
 - **Updates**: Push to GitHub for automatic redeployment
 
-Your Lepak Driver bot is now live and serving Singapore commuters! 🚌🇸🇬
+Your Claptrap Chore Bot is now live and ready to boss around minions about their chores! 🤖

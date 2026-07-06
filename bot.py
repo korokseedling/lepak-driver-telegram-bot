@@ -28,11 +28,6 @@ load_dotenv()
 print("🔍 Debug: Checking environment variables...")
 print(f"Total environment variables: {len(os.environ)}")
 
-# Print ALL environment variables (first 10 characters only for security)
-print("All env vars:")
-for key, value in list(os.environ.items())[:10]:  # Show first 10 to avoid spam
-    print(f"  {key}: {value[:10]}...")
-
 # Check specifically for our variables
 target_vars = ['TELEGRAM_TOKEN', 'OPENAI_API_KEY']
 for key in target_vars:
