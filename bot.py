@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import traceback
 from datetime import datetime, date, time as dt_time
 from dotenv import load_dotenv
 from telegram import Update
@@ -511,6 +512,7 @@ if __name__ == "__main__":
         app.run_polling()
 
     except Exception as e:
-        logging.error(f"❌ Bot startup failed: {e}")
+        logging.error("❌ Bot startup failed", exc_info=True)
         print(f"❌ Bot startup failed: {e}")
+        traceback.print_exc()
         print("💡 Check your .env file and try again")
