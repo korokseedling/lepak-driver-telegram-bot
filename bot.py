@@ -267,37 +267,9 @@ def process_user_message(user_input: str, user_id: int, username: str) -> str:
                 else:
                     tool_responses.append(f"❌ Unknown function: {function_name}")
 
-            # Prepare messages with tool responses for follow-up call
-            messages_with_tools = messages + [
-                {
-                    "role": "assistant",
-                    "content": assistant_message.content,
-                    "tool_calls": [{
-                        "id": tool_call.id,
-                        "type": "function",
-                        "function": {
-                            "name": tool_call.function.name,
-                            "arguments": tool_call.function.arguments
-                        }
-                    } for tool_call in assistant_message.tool_calls]
-                }
-            ] + [
-                {
-                    "role": "tool",
-                    "content": response_text,
-                    "tool_call_id": assistant_message.tool_calls[i].id
-                } for i, response_text in enumerate(tool_responses)
-            ]
-
-            # Make another API call with tool responses
-            final_response = client.chat.completions.create(
-                model=config['model_settings']['model_name'],
-                messages=messages_with_tools,
-                temperature=config['model_settings']['temperature'],
-                max_tokens=config['model_settings']['max_tokens']
-            )
-
-            final_message = final_response.choices[0].message.content
+            # Tool responses are already persona-formatted HTML (see chore_functions.py) —
+            # join them directly instead of paying for a second OpenAI call to rephrase them.
+            final_message = "\n\n".join(tool_responses)
 
             # Convert any asterisks to HTML as fallback protection
             final_message = convert_asterisks_to_html(final_message)
@@ -305,7 +277,7 @@ def process_user_message(user_input: str, user_id: int, username: str) -> str:
             # Save conversation with tool call info
             add_to_conversation_history(user_id, user_input, final_message, tool_call_info)
 
-            logging.info(f"✅ OpenAI API success with tools. Tokens: {final_response.usage.total_tokens}")
+            logging.info(f"✅ OpenAI API success with tools (local templating, no second call). Tokens: {response.usage.total_tokens}")
             return final_message
 
         else:

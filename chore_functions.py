@@ -1,21 +1,21 @@
 import chore_manager
+import response_templates as templates
 
 
 def add_chore_tool(user_id, name, interval_days, grace_days=3):
     try:
         chore = chore_manager.add_chore(user_id, name, interval_days, grace_days)
     except ValueError as e:
-        return f"❌ {e}"
-    return (f"✅ Got it, minion! New chore <b>{chore['name']}</b> is now tracked "
-            f"every {chore['interval_days']} day(s), with a {chore['grace_days']}-day grace period.")
+        return templates.render_error(str(e))
+    return templates.render_add_chore(chore['name'], chore['interval_days'], chore['grace_days'])
 
 
 def list_outstanding_chores_tool(user_id):
     outstanding = chore_manager.list_outstanding(user_id)
     if not outstanding:
-        return "✅ Nothing outstanding, minion! All chores are up to date."
+        return templates.render_outstanding_empty()
 
-    lines = ["📋 <b>Outstanding chores, minion:</b>"]
+    lines = [templates.render_outstanding_header()]
     for chore in outstanding:
         status_label = "OVERDUE" if chore["status"] == "overdue" else "due"
         lines.append(f"• <b>{chore['name']}</b> — {status_label} (last done: {chore['last_done']})")
@@ -25,13 +25,14 @@ def list_outstanding_chores_tool(user_id):
 def list_all_chores_tool(user_id):
     all_chores = chore_manager.list_all(user_id)
     if not all_chores:
-        return "No chores tracked yet."
+        return templates.render_all_empty()
 
-    lines = []
+    lines = [templates.render_all_header()]
     for chore in all_chores:
+        status_label = "OVERDUE" if chore["status"] == "overdue" else chore["status"]
         lines.append(
-            f"{chore['name']} | status: {chore['status']} | "
-            f"last_done: {chore['last_done']} | next_due: {chore['next_due']}"
+            f"• <b>{chore['name']}</b> — {status_label} "
+            f"(last done: {chore['last_done']}, next due: {chore['next_due']})"
         )
     return "\n".join(lines)
 
@@ -40,18 +41,16 @@ def complete_chore_tool(user_id, name, remark=None):
     try:
         chore = chore_manager.complete_chore(user_id, name, remark)
     except ValueError as e:
-        return f"❌ {e}"
-    remark_text = f" Remark logged: \"{remark}\"" if remark else ""
-    return f"✅ <b>{chore['name']}</b> marked done, minion!{remark_text}"
+        return templates.render_error(str(e))
+    return templates.render_complete_chore(chore['name'], remark)
 
 
 def update_chore_tool(user_id, name, interval_days=None, grace_days=None):
     try:
         chore = chore_manager.update_chore(user_id, name, interval_days, grace_days)
     except ValueError as e:
-        return f"❌ {e}"
-    return (f"✅ Updated <b>{chore['name']}</b>, minion! Now every {chore['interval_days']} day(s), "
-            f"grace period {chore['grace_days']} day(s).")
+        return templates.render_error(str(e))
+    return templates.render_update_chore(chore['name'], chore['interval_days'], chore['grace_days'])
 
 
 def format_overdue_notification(user_id):

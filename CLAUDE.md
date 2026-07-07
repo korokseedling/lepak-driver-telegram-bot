@@ -54,10 +54,15 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 **chore_functions.py** - OpenAI function implementations
 - `add_chore(name, interval_days, grace_days=3)` - create a new recurring chore
 - `list_outstanding_chores()` - list chores that are due or overdue
-- `list_all_chores()` - list every chore regardless of status, with last-done and next-due dates; returns plain unstyled text (no HTML/persona) — the LLM converts it to Claptrap's voice per `system_prompt.md`
+- `list_all_chores()` - list every chore regardless of status, with last-done and next-due dates; returns final HTML/persona text directly, same as the other tools
 - `complete_chore(name, remark=None)` - mark a chore done now, optionally logging a remark
 - `update_chore(name, interval_days=None, grace_days=None)` - change an existing chore's interval/grace settings
-- Telegram HTML formatting for all responses except `list_all_chores`, which is deliberately plain
+- Telegram HTML formatting for all responses, built via `response_templates.py` (see below) — no LLM rephrasing involved
+
+**response_templates.py** - Local persona templating
+- Each chore function's success/error message is built by picking from a pool of 10 pregenerated Claptrap-voiced phrasings and interpolating the real chore data (name, interval, grace, remark, error detail)
+- A shuffle-bag picker per template pool guarantees all 10 phrasings are used before any repeat, for response diversity without needing a second LLM call
+- Replaces what used to be a second OpenAI API call that rephrased tool output into persona — removing it roughly halves per-message latency on any chore-related request
 
 **model_config.json** - Configuration
 - OpenAI model settings (GPT-4o-mini via OpenRouter, temperature: 0.7)
@@ -65,15 +70,15 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 
 **system_prompt.md** - Bot personality and formatting rules
 - Claptrap persona: zany, boastful, Napoleon complex, calls the user "minion" — but chore facts reported must stay accurate, no exaggerating what's overdue
-- Strict HTML formatting requirements (no asterisks)
-- Guidance on when to call each of the 5 chore functions, including converting `list_all_chores`'s plain-text output into HTML/persona
+- Strict HTML formatting requirements (no asterisks) — only relevant to the no-tool-call chat path now, since tool responses are templated locally and never round-trip through the model
+- Guidance on when to call each of the 5 chore functions
 
 ### Data Flow
 
 1. **User message** → Telegram → `handle_message()`
 2. **Load conversation** history from `conversations/` directory
-3. **OpenAI processing** with system prompt (Claptrap) + history + chore tool schemas
-4. **Function calling** invokes `chore_functions.py`, which reads/writes `chores/chore_<user_id>.json` via `chore_manager.py`
+3. **OpenAI processing** with system prompt (Claptrap) + history + chore tool schemas — this single call both decides whether/which tool to call and, for plain chat with no tool call, produces the final reply directly
+4. **Function calling** (if a tool was chosen) invokes `chore_functions.py`, which reads/writes `chores/chore_<user_id>.json` via `chore_manager.py` and returns an already persona-formatted response via `response_templates.py` — no second OpenAI call
 5. **Response formatting** with HTML tags (convert asterisks as fallback)
 6. **Save conversation** and send reply
 
