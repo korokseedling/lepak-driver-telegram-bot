@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timedelta
 
 CHORES_DIR = "chores"
+NOTIFICATION_STATE_FILE = os.path.join(CHORES_DIR, ".notification_state.json")
 
 
 def slugify(name: str) -> str:
@@ -164,6 +165,23 @@ def list_all(user_id, now: datetime = None) -> list:
 
     result.sort(key=lambda c: (_status_rank[c["status"]], c["next_due"]))
     return result
+
+
+def get_last_notification_run() -> str:
+    """Returns the ISO date (UTC) the daily notification job last completed, or None."""
+    if not os.path.exists(NOTIFICATION_STATE_FILE):
+        return None
+    try:
+        with open(NOTIFICATION_STATE_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f).get("last_run_date")
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def set_last_notification_run(iso_date: str) -> None:
+    _ensure_chores_dir()
+    with open(NOTIFICATION_STATE_FILE, 'w', encoding='utf-8') as f:
+        json.dump({"last_run_date": iso_date}, f)
 
 
 def list_all_user_ids() -> list:

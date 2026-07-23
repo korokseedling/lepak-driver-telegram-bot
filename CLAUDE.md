@@ -112,7 +112,9 @@ One JSON file per user: `chores/chore_<user_id>.json`
 
 ### Daily Due/Overdue Notification
 
-A `JobQueue.run_daily` job (registered at bot startup, `check_chore_status_job` in `bot.py`) scans every file in `chores/` once per day and sends a proactive Telegram message, in Claptrap's voice, to any user with a **due** or **overdue** chore. `chore_functions.format_daily_notification()` builds one combined message per user: a "heads up" section for chores that just became due, and a louder nagging section for chores past their grace period — either section is omitted if empty. One bad/corrupt user file must not stop the job from processing the rest.
+A `JobQueue.run_daily` job (registered at bot startup, `check_chore_status_job` in `bot.py`) scans every file in `chores/` once per day at 09:00 UTC and sends a proactive Telegram message, in Claptrap's voice, to any user with a **due** or **overdue** chore. `chore_functions.format_daily_notification()` builds one combined message per user: a "heads up" section for chores that just became due, and a louder nagging section for chores past their grace period — either section is omitted if empty. One bad/corrupt user file must not stop the job from processing the rest.
+
+After each run, `check_chore_status_job` records today's UTC date via `chore_manager.set_last_notification_run()` into `chores/.notification_state.json` on the persistent volume. A `JobQueue.run_repeating` watchdog (`chore_status_watchdog_job`, every 30 min) checks that state file: if it's past 09:00 UTC and today's date isn't recorded, the scheduled run must have been missed (e.g. the process was down/restarting at 09:00) — the watchdog re-runs `check_chore_status_job` immediately as catch-up. This only guards against the job silently not firing while the process is otherwise alive/restarting; it can't help if the worker is down entirely for an extended period (Railway's restart policy — `ON_FAILURE`, max 10 retries — handles that separately).
 
 ### Key Features
 

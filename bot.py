@@ -2,7 +2,7 @@ import os
 import logging
 import json
 import traceback
-from datetime import datetime, date, time as dt_time
+from datetime import datetime, date, time as dt_time, timezone, timedelta
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler
@@ -455,6 +455,26 @@ async def check_chore_status_job(context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logging.error(f"❌ Error checking chore status for user {user_id}: {e}")
 
+    chore_manager.set_last_notification_run(datetime.now(timezone.utc).date().isoformat())
+
+
+# Watchdog: catches the case where the 09:00 UTC run above never fired (process was
+# down/restarting at that instant) by re-running it once it notices the day's run is
+# missing. Runs every 30 min so a missed run is caught within that window.
+NOTIFICATION_SCHEDULED_TIME = dt_time(hour=9, minute=0)
+
+
+async def chore_status_watchdog_job(context: ContextTypes.DEFAULT_TYPE):
+    now = datetime.now(timezone.utc)
+    if now.time() < NOTIFICATION_SCHEDULED_TIME:
+        return  # today's scheduled run isn't due yet
+
+    if chore_manager.get_last_notification_run() == now.date().isoformat():
+        return  # already ran today
+
+    logging.warning("⚠️ Daily chore notification missed its 09:00 UTC slot — running catch-up now")
+    await check_chore_status_job(context)
+
 if __name__ == "__main__":
     print("🤖 Starting Claptrap Chore Bot...")
     print(f"🔧 Using {config['model_settings']['model_name']} model")
@@ -474,12 +494,14 @@ if __name__ == "__main__":
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         app.add_handler(MessageHandler(~filters.TEXT & ~filters.COMMAND, handle_non_text))
 
-        # Schedule the daily due/overdue chore check at 09:00
-        app.job_queue.run_daily(check_chore_status_job, time=dt_time(hour=9, minute=0))
+        # Schedule the daily due/overdue chore check at 09:00 UTC, plus a watchdog
+        # that catches up if the process was down at that instant.
+        app.job_queue.run_daily(check_chore_status_job, time=NOTIFICATION_SCHEDULED_TIME)
+        app.job_queue.run_repeating(chore_status_watchdog_job, interval=timedelta(minutes=30), first=timedelta(minutes=5))
 
         logging.info("🚀 Claptrap Chore Bot handlers configured")
         print("✅ Bot initialized successfully!")
-        print("⏰ Daily due/overdue chore check scheduled for 09:00")
+        print("⏰ Daily due/overdue chore check scheduled for 09:00 UTC (with missed-run watchdog)")
         print("🔄 Starting polling for messages...")
         app.run_polling()
 
