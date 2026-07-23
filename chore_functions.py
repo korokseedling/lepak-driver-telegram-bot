@@ -18,7 +18,7 @@ def list_outstanding_chores_tool(user_id):
     lines = [templates.render_outstanding_header()]
     for chore in outstanding:
         status_label = "OVERDUE" if chore["status"] == "overdue" else "due"
-        lines.append(f"• <b>{chore['name']}</b> — {status_label} (last done: {chore['last_done']})")
+        lines.append(f"• <b>{chore['name']}</b> — {status_label} (last done: {templates.format_friendly_date(chore['last_done'])})")
     return "\n".join(lines)
 
 
@@ -32,7 +32,8 @@ def list_all_chores_tool(user_id):
         status_label = "OVERDUE" if chore["status"] == "overdue" else chore["status"]
         lines.append(
             f"• <b>{chore['name']}</b> — {status_label} "
-            f"(last done: {chore['last_done']}, next due: {chore['next_due']})"
+            f"(last done: {templates.format_friendly_date(chore['last_done'])}, "
+            f"next due: {templates.format_friendly_date(chore['next_due'])})"
         )
     return "\n".join(lines)
 
@@ -53,16 +54,31 @@ def update_chore_tool(user_id, name, interval_days=None, grace_days=None):
     return templates.render_update_chore(chore['name'], chore['interval_days'], chore['grace_days'])
 
 
-def format_overdue_notification(user_id):
+def format_daily_notification(user_id):
     data = chore_manager.load_chores(user_id)
-    overdue = [c for c in data["chores"] if chore_manager.get_chore_status(c) == "overdue"]
-    if not overdue:
+    due = []
+    overdue = []
+    for chore in data["chores"]:
+        status = chore_manager.get_chore_status(chore)
+        if status == "due":
+            due.append(chore)
+        elif status == "overdue":
+            overdue.append(chore)
+
+    if not due and not overdue:
         return None
 
-    lines = ["🚨 <b>ATTENTION, MINION!</b> Claptrap has detected NEGLECTED CHORES:"]
-    for chore in overdue:
-        lines.append(f"• <b>{chore['name']}</b> — overdue (last done: {chore['last_done']})")
-    lines.append("Fix this immediately, or face... mild disappointment from a very important robot.")
+    lines = []
+    if overdue:
+        lines.append("🚨 <b>ATTENTION, MINION!</b> Claptrap has detected NEGLECTED CHORES:")
+        for chore in overdue:
+            lines.append(f"• <b>{chore['name']}</b> — overdue (last done: {templates.format_friendly_date(chore['last_done'])})")
+    if due:
+        lines.append("📋 <b>Heads up, minion!</b> These have just come due:")
+        for chore in due:
+            lines.append(f"• <b>{chore['name']}</b> — due (last done: {templates.format_friendly_date(chore['last_done'])})")
+    if overdue:
+        lines.append("Fix this immediately, or face... mild disappointment from a very important robot.")
     return "\n".join(lines)
 
 

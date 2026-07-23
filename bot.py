@@ -351,7 +351,7 @@ Greetings, minion! I, the GREATEST chore-tracking robot in the universe, shall n
 • "What do I still need to do?"
 
 ⏰ <b>Get notified of neglected chores</b>
-• I'll shout at you once a day if something's overdue!
+• I'll ping you once a day if something's due, and shout if it's overdue!
 
 🆕 <b>Set up a new chore</b>
 • "Track watering the plants every 3 days"
@@ -439,8 +439,8 @@ async def handle_non_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_conversation(user.id, username, "non_text", message_type, "handled")
     await update.message.reply_text("Wah, minion! Claptrap can only read text messages! Type your chore question instead! 🧹", parse_mode='HTML')
 
-# Daily job: notify every user who has at least one overdue chore
-async def check_overdue_chores_job(context: ContextTypes.DEFAULT_TYPE):
+# Daily job: notify every user who has a chore that's due or overdue
+async def check_chore_status_job(context: ContextTypes.DEFAULT_TYPE):
     for user_id in chore_manager.list_all_user_ids():
         try:
             data = chore_manager.load_chores(user_id)
@@ -448,12 +448,12 @@ async def check_overdue_chores_job(context: ContextTypes.DEFAULT_TYPE):
             if not chat_id:
                 continue
 
-            message = chore_functions.format_overdue_notification(user_id)
+            message = chore_functions.format_daily_notification(user_id)
             if message:
                 await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='HTML')
-                logging.info(f"⏰ Sent overdue chore notification to user {user_id}")
+                logging.info(f"⏰ Sent chore status notification to user {user_id}")
         except Exception as e:
-            logging.error(f"❌ Error checking overdue chores for user {user_id}: {e}")
+            logging.error(f"❌ Error checking chore status for user {user_id}: {e}")
 
 if __name__ == "__main__":
     print("🤖 Starting Claptrap Chore Bot...")
@@ -474,12 +474,12 @@ if __name__ == "__main__":
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         app.add_handler(MessageHandler(~filters.TEXT & ~filters.COMMAND, handle_non_text))
 
-        # Schedule the daily overdue-chore check at 09:00
-        app.job_queue.run_daily(check_overdue_chores_job, time=dt_time(hour=9, minute=0))
+        # Schedule the daily due/overdue chore check at 09:00
+        app.job_queue.run_daily(check_chore_status_job, time=dt_time(hour=9, minute=0))
 
         logging.info("🚀 Claptrap Chore Bot handlers configured")
         print("✅ Bot initialized successfully!")
-        print("⏰ Daily overdue chore check scheduled for 09:00")
+        print("⏰ Daily due/overdue chore check scheduled for 09:00")
         print("🔄 Starting polling for messages...")
         app.run_polling()
 

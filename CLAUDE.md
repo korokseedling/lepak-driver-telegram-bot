@@ -44,7 +44,7 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 - Conversation history management (20 messages per user per day)
 - Environment variable validation with detailed Railway debugging
 - Asterisk-to-HTML conversion for Telegram formatting
-- Daily `JobQueue` job that scans all users' chore files and proactively messages anyone with overdue chores
+- Daily `JobQueue` job that scans all users' chore files and proactively messages anyone with due or overdue chores
 
 **chore_manager.py** - Chore persistence and business logic
 - CRUD for chores, stored one JSON file per user in `chores/`
@@ -61,6 +61,7 @@ git push origin main  # Auto-deploys via Procfile: worker: python bot.py
 
 **response_templates.py** - Local persona templating
 - Each chore function's success/error message is built by picking from a pool of 10 pregenerated Claptrap-voiced phrasings and interpolating the real chore data (name, interval, grace, remark, error detail)
+- `format_friendly_date(iso_str)` renders stored ISO timestamps (`last_done`, `next_due`) as reader-friendly dates (e.g. "6 Jul 2026") everywhere a chore date is shown to the user
 - A shuffle-bag picker per template pool guarantees all 10 phrasings are used before any repeat, for response diversity without needing a second LLM call
 - Replaces what used to be a second OpenAI API call that rephrased tool output into persona — removing it roughly halves per-message latency on any chore-related request
 
@@ -109,15 +110,15 @@ One JSON file per user: `chores/chore_<user_id>.json`
 - `chat_id` is captured on first message (private chats only) so the daily job can push notifications without depending on the LLM path.
 - A new chore's `last_done` is set to `created_at` at creation time, so the interval starts counting immediately.
 
-### Daily Overdue Notification
+### Daily Due/Overdue Notification
 
-A `JobQueue.run_daily` job (registered at bot startup) scans every file in `chores/` once per day and sends a proactive Telegram message, in Claptrap's voice, to any user with **overdue** (not just due) chores. This avoids nagging during the grace window. One bad/corrupt user file must not stop the job from processing the rest.
+A `JobQueue.run_daily` job (registered at bot startup, `check_chore_status_job` in `bot.py`) scans every file in `chores/` once per day and sends a proactive Telegram message, in Claptrap's voice, to any user with a **due** or **overdue** chore. `chore_functions.format_daily_notification()` builds one combined message per user: a "heads up" section for chores that just became due, and a louder nagging section for chores past their grace period — either section is omitted if empty. One bad/corrupt user file must not stop the job from processing the rest.
 
 ### Key Features
 
 - **Conversation persistence**: Daily conversation files with 20-message limit
 - **Recurring chore tracking**: interval + configurable grace period per chore
-- **Proactive notifications**: daily scan pushes overdue chores to affected users
+- **Proactive notifications**: daily scan pushes due and overdue chores to affected users
 - **Error handling**: not-found/duplicate/invalid-args cases return clear errors the LLM relays in-persona
 - **HTML formatting**: All responses use HTML tags, never asterisks
 - **Auto-cleanup**: Old conversation files (>7 days) cleaned on startup

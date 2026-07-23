@@ -1,6 +1,11 @@
 import random
+from datetime import datetime
 
 _bags = {}
+
+
+def format_friendly_date(iso_str):
+    return datetime.fromisoformat(iso_str).strftime("%-d %b %Y")
 
 
 def _draw(key, templates):
